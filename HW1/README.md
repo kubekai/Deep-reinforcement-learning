@@ -118,8 +118,6 @@ obstacles = set()
 - 避免終點的箭頭都不指向起點
 
 ## 執行結果
-
-## 執行結果
 ![步驟一](HW1-2/Result/1.png)
 ![步驟二](HW1-2/Result/2.png)
 ![步驟三](HW1-2/Result/3.png)
