@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>網格地圖</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+        }
+        table {
+            border-collapse: collapse;
+            margin: 20px auto;
+        }
+        td {
+            width: 50px;
+            height: 50px;
+            text-align: center;
+            border: 1px solid black;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        .start { background-color: green; color: white; }
+        .end { background-color: red; color: white; }
+        .obstacle { background-color: gray; color: white; }
+        button {
+            margin: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        #instruction {
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h2>生成 n x n 網格</h2>
+    <label>輸入 5 到 9 之間的數字：</label>
+    <input type="number" id="gridSize" min="5" max="9">
+    <button onclick="generateGrid()">生成網格</button>
+    <div id="instruction">步驟 1：請輸入網格大小並點擊「生成網格」</div>
+    <div id="gridContainer"></div>
+
+    <script>
+        let startSet = false;
+        let endSet = false;
+        let obstacleCount = 0;
+        let maxObstacles = 0;
+        let gridSize = 0;
+        let step = 1;
+        
+        function generateGrid() {
+            gridSize = parseInt(document.getElementById("gridSize").value);
+            if (isNaN(gridSize) || gridSize < 5 || gridSize > 9) {
+                alert("請輸入 5 到 9 之間的數字");
+                return;
+            }
+            
+            maxObstacles = gridSize - 2;
+            startSet = false;
+            endSet = false;
+            obstacleCount = 0;
+            step = 2;
+            updateInstruction();
+            
+            let gridContainer = document.getElementById("gridContainer");
+            gridContainer.innerHTML = "";
+            
+            let table = document.createElement("table");
+            let count = 1;
+            for (let i = 0; i < gridSize; i++) {
+                let row = document.createElement("tr");
+                for (let j = 0; j < gridSize; j++) {
+                    let cell = document.createElement("td");
+                    cell.dataset.row = i;
+                    cell.dataset.col = j;
+                    cell.innerText = count++;
+                    cell.addEventListener("click", function() { handleCellClick(this); });
+                    row.appendChild(cell);
+                }
+                table.appendChild(row);
+            }
+            gridContainer.appendChild(table);
+        }
+
+        function handleCellClick(cell) {
+            if (step === 2 && !startSet) {
+                resetClass(cell, "start");
+                startSet = true;
+                step = 3;
+                updateInstruction();
+            } else if (step === 3 && !endSet && !cell.classList.contains("start")) {
+                resetClass(cell, "end");
+                endSet = true;
+                step = 4;
+                updateInstruction();
+            } else if (step === 4 && !cell.classList.contains("start") && !cell.classList.contains("end") && obstacleCount < maxObstacles) {
+                cell.classList.add("obstacle");
+                obstacleCount++;
+                if (obstacleCount === maxObstacles) {
+                    step = 5;
+                }
+                updateInstruction();
+            }
+        }
+
+        function resetClass(cell, className) {
+            cell.className = "";
+            cell.classList.add(className);
+        }
+
+        function updateInstruction() {
+            let instruction = document.getElementById("instruction");
+            if (step === 2) {
+                instruction.innerText = "步驟 2：請點擊一個點作為起點";
+            } else if (step === 3) {
+                instruction.innerText = "步驟 3：請點擊一個點作為終點";
+            } else if (step === 4) {
+                instruction.innerText = `步驟 4：請選擇 ${maxObstacles} 個障礙物`;
+            } else if (step === 5) {
+                instruction.innerText = "步驟 5：設定完成！";
+            }
+        }
+    </script>
+</body>
+</html>

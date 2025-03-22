@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>網格策略評估</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+        }
+        table {
+            border-collapse: collapse;
+            margin: 20px auto;
+        }
+        td {
+            width: 50px;
+            height: 50px;
+            text-align: center;
+            border: 1px solid black;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            position: relative;
+        }
+        .start { background-color: green; color: white; }
+        .end { background-color: red; color: white; }
+        .obstacle { background-color: gray; color: white; }
+        .arrow {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 20px;
+            pointer-events: none;
+        }
+        button {
+            margin: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        #instruction {
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        .grid-container {
+            display: flex;
+            justify-content: center;
+            gap: 50px;
+        }
+    </style>
+</head>
+<body>
+    <h2>策略評估網格</h2>
+    <label>輸入 5 到 9 之間的數字：</label>
+    <input type="number" id="gridSize" min="5" max="9">
+    <button onclick="generateGrid()">生成網格</button>
+    <button onclick="generatePolicyMatrix()" disabled id="policyBtn">生成 Policy Matrix</button>
+    <button onclick="evaluatePolicy()" disabled id="evaluateBtn">策略評估</button>
+    <div id="instruction">步驟 1：請輸入網格大小並點擊「生成網格」</div>
+    
+    <div class="grid-container">
+        <div>
+            <h3>策略網格</h3>
+            <div id="gridContainer"></div>
+        </div>
+        <div>
+            <h3>價值評估網格</h3>
+            <div id="valueContainer"></div>
+        </div>
+    </div>
+
+    <script>
+        let startSet = false;
+        let endSet = false;
+        let obstacleCount = 0;
+        let maxObstacles = 0;
+        let gridSize = 0;
+        let step = 1;
+        let startCell = null;
+        let endCell = null;
+        let policy = {};
+        let valueGrid = [];
+
+        let directions = ['↑', '↓', '←', '→'];
+        let moveOffsets = { '↑': [-1, 0], '↓': [1, 0], '←': [0, -1], '→': [0, 1] };
+
+        function generateGrid() {
+            gridSize = parseInt(document.getElementById("gridSize").value);
+            if (isNaN(gridSize) || gridSize < 5 || gridSize > 9) {
+                alert("請輸入 5 到 9 之間的數字");
+                return;
+            }
+            
+            maxObstacles = gridSize - 2;
+            startSet = false;
+            endSet = false;
+            obstacleCount = 0;
+            step = 2;
+            document.getElementById("policyBtn").disabled = true;
+            document.getElementById("evaluateBtn").disabled = true;
+            updateInstruction();
+            
+            document.getElementById("gridContainer").innerHTML = "";
+            document.getElementById("valueContainer").innerHTML = "";
+            policy = {};
+            valueGrid = Array.from({ length: gridSize }, () => Array(gridSize).fill(0));
+
+            let table = document.createElement("table");
+            for (let i = 0; i < gridSize; i++) {
+                let row = document.createElement("tr");
+                for (let j = 0; j < gridSize; j++) {
+                    let cell = document.createElement("td");
+                    cell.dataset.row = i;
+                    cell.dataset.col = j;
+                    cell.dataset.id = i * gridSize + j + 1;
+                    cell.innerText = cell.dataset.id; 
+                    cell.addEventListener("click", function() { handleCellClick(this); });
+                    row.appendChild(cell);
+                }
+                table.appendChild(row);
+            }
+            document.getElementById("gridContainer").appendChild(table);
+        }
+
+        function handleCellClick(cell) {
+            if (step === 2 && !startSet) {
+                resetClass(cell, "start");
+                startSet = true;
+                startCell = cell;
+                step = 3;
+                updateInstruction();
+            } else if (step === 3 && !endSet && !cell.classList.contains("start")) {
+                resetClass(cell, "end");
+                endSet = true;
+                endCell = cell;
+                step = 4;
+                updateInstruction();
+            } else if (step === 4 && !cell.classList.contains("start") && !cell.classList.contains("end") && obstacleCount < maxObstacles) {
+                cell.classList.add("obstacle");
+                obstacleCount++;
+                if (obstacleCount === maxObstacles) {
+                    step = 5;
+                    document.getElementById("policyBtn").disabled = false;
+                }
+                updateInstruction();
+            }
+        }
+
+        function resetClass(cell, className) {
+            cell.className = "";
+            cell.classList.add(className);
+        }
+
+        function updateInstruction() {
+            let instruction = document.getElementById("instruction");
+            let stepMessages = {
+                2: "步驟 2：請點選網格中的起點",
+                3: "步驟 3：請點選終點",
+                4: "步驟 4：請點選障礙物（選擇 " + maxObstacles + " 個）",
+                5: "步驟 5：設定完成！請點擊「生成 Policy Matrix」"
+            };
+            instruction.innerText = stepMessages[step] || "請繼續操作";
+        }
+
+        function generatePolicyMatrix() {
+            let table = document.querySelector("#gridContainer table");
+            let directionCount = { '↑': 0, '↓': 0, '←': 0, '→': 0 };
+            let totalCells = 0;
+            
+            // 先統計可放置策略的格子數量
+            table.querySelectorAll("td").forEach(cell => {
+                if (!cell.classList.contains("start") && 
+                    !cell.classList.contains("end") && 
+                    !cell.classList.contains("obstacle")) {
+                    totalCells++;
+                }
+            });
+            
+            let avgCount = Math.floor(totalCells / 4); // 平均每個方向的數量
+            
+            table.querySelectorAll("td").forEach(cell => {
+                let row = parseInt(cell.dataset.row);
+                let col = parseInt(cell.dataset.col);
+                let key = `${row},${col}`;
+                
+                if (!cell.classList.contains("start") && 
+                    !cell.classList.contains("end") && 
+                    !cell.classList.contains("obstacle")) {
+                    
+                    cell.innerText = "";  // 清空數字
+                    let arrow = document.createElement("div");
+                    arrow.classList.add("arrow");
+                    
+                    let availableDirections = directions.slice(); // 取得所有可能方向
+                    
+                    // 避免箭頭指向起點
+                    if (startCell) {
+                        let startRow = parseInt(startCell.dataset.row);
+                        let startCol = parseInt(startCell.dataset.col);
+                        if (row - 1 === startRow && col === startCol) availableDirections.splice(availableDirections.indexOf('↓'), 1);
+                        if (row + 1 === startRow && col === startCol) availableDirections.splice(availableDirections.indexOf('↑'), 1);
+                        if (row === startRow && col - 1 === startCol) availableDirections.splice(availableDirections.indexOf('→'), 1);
+                        if (row === startRow && col + 1 === startCol) availableDirections.splice(availableDirections.indexOf('←'), 1);
+                    }
+                    
+                    // 靠近終點時優先朝終點方向
+                    if (endCell) {
+                        let endRow = parseInt(endCell.dataset.row);
+                        let endCol = parseInt(endCell.dataset.col);
+                        availableDirections.sort((a, b) => {
+                            let [drA, dcA] = moveOffsets[a];
+                            let [drB, dcB] = moveOffsets[b];
+                            let distA = Math.abs((row + drA) - endRow) + Math.abs((col + dcA) - endCol);
+                            let distB = Math.abs((row + drB) - endRow) + Math.abs((col + dcB) - endCol);
+                            return distA - distB;
+                        });
+                    }
+                    
+                    // 確保方向分布均衡
+                    let selectedDirection = availableDirections.find(dir => directionCount[dir] < avgCount) || availableDirections[0];
+                    directionCount[selectedDirection]++;
+                    
+                    arrow.innerText = selectedDirection;
+                    cell.appendChild(arrow);
+                    policy[key] = selectedDirection;
+                }
+            });
+    
+            document.getElementById("evaluateBtn").disabled = false;
+            generateValueGrid(); // 生成價值評估網格
+        }
+
+
+        function generateValueGrid() {
+            document.getElementById("valueContainer").innerHTML = "";
+
+            let table = document.createElement("table");
+            for (let i = 0; i < gridSize; i++) {
+                let row = document.createElement("tr");
+                for (let j = 0; j < gridSize; j++) {
+                    let cell = document.createElement("td");
+                    let gridCell = document.querySelector(`[data-row='${i}'][data-col='${j}']`);
+
+                    if (gridCell.classList.contains("start")) {
+                        cell.classList.add("start");
+                    } else if (gridCell.classList.contains("end")) {
+                        cell.classList.add("end");
+                    } else if (gridCell.classList.contains("obstacle")) {
+                        cell.classList.add("obstacle");
+                    } else {
+                        cell.innerText = valueGrid[i][j].toFixed(2);
+                    }
+
+                    row.appendChild(cell);
+                }
+                table.appendChild(row);
+            }
+            document.getElementById("valueContainer").appendChild(table);
+        }
+
+        function evaluatePolicy() {
+            let gamma = 0.7; // 折扣因子
+            let threshold = 0.00001; // 收斂條件
+            let delta;
+
+            do {
+                delta = 0;
+                let newValueGrid = JSON.parse(JSON.stringify(valueGrid)); // 複製當前價值表
+
+                for (let i = 0; i < gridSize; i++) {
+                    for (let j = 0; j < gridSize; j++) {
+                        let cellKey = `${i},${j}`;
+                        let cell = document.querySelector(`[data-row='${i}'][data-col='${j}']`);
+
+                        if (cell.classList.contains("obstacle") || cell.classList.contains("end")) {
+                            continue; // 障礙物和終點不更新
+                        }
+
+                        if (policy[cellKey]) {
+                            let action = policy[cellKey];
+                            let [di, dj] = moveOffsets[action];
+                            let ni = i + di, nj = j + dj;
+
+                            let reward = cell.classList.contains("end") ? 10 : -1;
+                            let transitionProbability = 1.0; // 假設確定性策略
+                            let expectedValue = 0;
+
+                            if (ni >= 0 && ni < gridSize && nj >= 0 && nj < gridSize &&
+                                !document.querySelector(`[data-row='${ni}'][data-col='${nj}']`).classList.contains("obstacle")) {
+                                expectedValue = reward + gamma * valueGrid[ni][nj];
+                            } else {
+                                expectedValue = -5 + gamma * valueGrid[i][j]; // 超出邊界給額外懲罰
+                            }
+
+                            newValueGrid[i][j] = expectedValue;
+                            delta = Math.max(delta, Math.abs(newValueGrid[i][j] - valueGrid[i][j]));
+                        }
+                    }
+                }
+                valueGrid = newValueGrid; // 更新價值網格
+            } while (delta > threshold); // 迭代至收斂
+
+            generateValueGrid(); // 重新繪製價值網格
+        }
+
+    </script>
+</body>
+</html>
