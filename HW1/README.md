@@ -119,6 +119,13 @@ obstacles = set()
 
 ## 執行結果
 
-![影片](HW1-2/Result/Result.mp4)
+## 執行結果
+![步驟一](HW1-2/Result/1.png)
+![步驟二](HW1-2/Result/2.png)
+![步驟三](HW1-2/Result/3.png)
+![步驟四](HW1-2/Result/4.png)
+![步驟五](HW1-2/Result/5.png)
+![步驟六](HW1-2/Result/6.png)
+![步驟七](HW1-2/Result/7.png)
 
 
