@@ -75,12 +75,12 @@ obstacles = set()
 3. 在瀏覽器開啟 `http://127.0.0.1:5000/`，開始使用應用程式。
 
 ## 執行結果
-![步驟一](HW1/HW1-1/Result/1.png)
-![步驟二](HW1/HW1-1/Result/2.png)
-![步驟三](HW1/HW1-1/Result/3.png)
-![步驟四](HW1/HW1-1/Result/4.png)
-![步驟五](HW1/HW1-1/Result/5.png)
-![步驟六](HW1/HW1-1/Result/6.png)
+![步驟一](HW1-1/Result/1.png)
+![步驟二](HW1-1/Result/2.png)
+![步驟三](HW1-1/Result/3.png)
+![步驟四](HW1-1/Result/4.png)
+![步驟五](HW1-1/Result/5.png)
+![步驟六](HW1-1/Result/6.png)
 
 
 # HW1-2
@@ -119,6 +119,6 @@ obstacles = set()
 
 ## 執行結果
 
-![影片](HW1/HW1-2/Result/Result.mp4)
+![影片](HW1-2/Result/Result.mp4)
 
 
