@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>網格策略評估</title>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 20px;
+    }
+    table {
+      border-collapse: collapse;
+      margin: 20px auto;
+    }
+    td {
+      width: 60px;
+      height: 60px;
+      text-align: center;
+      border: 1px solid black;
+      font-size: 14px;
+      font-weight: bold;
+      position: relative;
+    }
+    .start { background-color: green; color: white; }
+    .end { background-color: red; color: white; }
+    .obstacle { background-color: gray; color: white; }
+    /* 追蹤中的區塊：模擬進程中的格子用黃色 */
+    .tracking { background-color: yellow !important; }
+    /* 最終路徑：用橙色標記，並在非終點顯示箭頭 */
+    .final-path { background-color: orange !important; }
+    .arrow {
+      position: absolute;
+      top: 5px;
+      left: 5px;
+      font-size: 20px;
+      pointer-events: none;
+    }
+    .value {
+      position: absolute;
+      bottom: 5px;
+      right: 5px;
+      font-size: 12px;
+      pointer-events: none;
+    }
+    button {
+      margin: 10px;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    #instruction {
+      font-size: 18px;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+    .grid-container {
+      display: flex;
+      justify-content: center;
+      gap: 50px;
+    }
+  </style>
+</head>
+<body>
+  <h2>策略評估網格</h2>
+  <label>輸入 5 到 9 之間的數字：</label>
+  <input type="number" id="gridSize" min="5" max="9">
+  <button onclick="generateGrid()">生成網格</button>
+  <button onclick="startSimulation()" disabled id="simulateBtn">開始策略評估</button>
+  <div id="instruction">步驟 1：請輸入網格大小並點擊「生成網格」</div>
+  
+  <div class="grid-container">
+    <div>
+      <h3>主網格（Value Function）</h3>
+      <div id="gridContainer"></div>
+    </div>
+    <div>
+      <h3>設定的網格</h3>
+      <div id="valueContainer"></div>
+    </div>
+  </div>
+
+  <script>
+    let startSet = false;
+    let endSet = false;
+    let obstacleCount = 0;
+    let maxObstacles = 0;
+    let gridSize = 0;
+    let step = 1;
+    
+    // 用於記錄已選擇的起點、終點（前端僅供顯示，後端記錄模擬狀態）
+    let startCellElem = null;
+    let endCellElem = null;
+    
+    // 用來儲存生成網格的表格元素
+    let gridTable = null;
+    
+    function generateGrid() {
+      gridSize = parseInt(document.getElementById("gridSize").value);
+      if (isNaN(gridSize) || gridSize < 5 || gridSize > 9) {
+        alert("請輸入 5 到 9 之間的數字");
+        return;
+      }
+      maxObstacles = gridSize - 2;
+      startSet = false;
+      endSet = false;
+      obstacleCount = 0;
+      step = 2; // 下一步：設定起點
+      
+      // 通知後端設定網格大小與初始化模擬狀態
+      $.ajax({
+        url: '/set_grid_size',
+        type: 'POST',
+        data: JSON.stringify({ size: gridSize }),
+        contentType: 'application/json'
+      });
+      
+      document.getElementById("simulateBtn").disabled = true;
+      updateInstruction();
+      
+      // 生成主網格（用來顯示 value function 及模擬過程）
+      let table = document.createElement("table");
+      for (let i = 0; i < gridSize; i++) {
+        let row = document.createElement("tr");
+        for (let j = 0; j < gridSize; j++) {
+          let cell = document.createElement("td");
+          cell.dataset.row = i;
+          cell.dataset.col = j;
+          cell.innerText = "0.00";
+          cell.addEventListener("click", function() { handleCellClick(this); });
+          row.appendChild(cell);
+        }
+        table.appendChild(row);
+      }
+      document.getElementById("gridContainer").innerHTML = "";
+      document.getElementById("gridContainer").appendChild(table);
+      gridTable = table;
+      // 同步更新右側價值網格顯示
+      generateValueGrid();
+    }
+    
+    function handleCellClick(cell) {
+      let row = parseInt(cell.dataset.row);
+      let col = parseInt(cell.dataset.col);
+      // 步驟：先設定起點、再終點，最後選擇障礙物
+      if (step === 2 && !startSet) {
+        cell.classList.add("start");
+        startSet = true;
+        startCellElem = cell;
+        step = 3;
+        updateInstruction();
+        $.ajax({
+          url: '/set_cell',
+          type: 'POST',
+          data: JSON.stringify({ cell: [row, col], type: "start" }),
+          contentType: 'application/json'
+        });
+      } else if (step === 3 && !endSet && !cell.classList.contains("start")) {
+        cell.classList.add("end");
+        endSet = true;
+        endCellElem = cell;
+        step = 4;
+        updateInstruction();
+        $.ajax({
+          url: '/set_cell',
+          type: 'POST',
+          data: JSON.stringify({ cell: [row, col], type: "end" }),
+          contentType: 'application/json'
+        });
+      } else if (step === 4 && !cell.classList.contains("start") && 
+                 !cell.classList.contains("end") && obstacleCount < maxObstacles) {
+        cell.classList.add("obstacle");
+        obstacleCount++;
+        $.ajax({
+          url: '/set_cell',
+          type: 'POST',
+          data: JSON.stringify({ cell: [row, col], type: "obstacle" }),
+          contentType: 'application/json'
+        });
+        if (obstacleCount === maxObstacles) {
+          // 檢查是否至少有一條路徑可從起點到終點
+          if (!checkPathExists()) {
+            alert("所選障礙物阻斷了起點到終點的路徑，請重新選擇障礙物。");
+            return;
+          }
+          step = 5;
+          document.getElementById("simulateBtn").disabled = false;
+        }
+        updateInstruction();
+      }
+    }
+    
+    function updateInstruction() {
+      let instruction = document.getElementById("instruction");
+      let stepMessages = {
+        2: "步驟 2：請點選網格中的起點",
+        3: "步驟 3：請點選終點",
+        4: "步驟 4：請點選障礙物（選擇 " + maxObstacles + " 個）",
+        5: "步驟 5：設定完成！請點擊「開始策略評估」"
+      };
+      instruction.innerText = stepMessages[step] || "請繼續操作";
+    }
+    
+    // 利用 BFS 檢查前端畫面中是否存在從起點到終點的路徑
+    function checkPathExists() {
+      if (!startCellElem || !endCellElem) return false;
+      let startRow = parseInt(startCellElem.dataset.row);
+      let startCol = parseInt(startCellElem.dataset.col);
+      let endRow = parseInt(endCellElem.dataset.row);
+      let endCol = parseInt(endCellElem.dataset.col);
+      let visited = Array.from({ length: gridSize }, () => Array(gridSize).fill(false));
+      let queue = [[startRow, startCol]];
+      visited[startRow][startCol] = true;
+      while (queue.length > 0) {
+        let [i, j] = queue.shift();
+        if (i === endRow && j === endCol) return true;
+        // 四個方向
+        [[-1,0],[1,0],[0,-1],[0,1]].forEach(offset => {
+          let ni = i + offset[0], nj = j + offset[1];
+          if (ni >= 0 && ni < gridSize && nj >= 0 && nj < gridSize && !visited[ni][nj]) {
+            let cell = document.querySelector(`[data-row='${ni}'][data-col='${nj}']`);
+            if (cell && !cell.classList.contains("obstacle")) {
+              visited[ni][nj] = true;
+              queue.push([ni, nj]);
+            }
+          }
+        });
+      }
+      return false;
+    }
+    
+    // 生成右側顯示 V(s) 的表格
+    function generateValueGrid() {
+      let table = document.createElement("table");
+      for (let i = 0; i < gridSize; i++) {
+        let row = document.createElement("tr");
+        for (let j = 0; j < gridSize; j++) {
+          let cell = document.createElement("td");
+          let gridCell = document.querySelector(`[data-row='${i}'][data-col='${j}']`);
+          if (gridCell) {
+            if (gridCell.classList.contains("start")) {
+              cell.classList.add("start");
+            } else if (gridCell.classList.contains("end")) {
+              cell.classList.add("end");
+            } else if (gridCell.classList.contains("obstacle")) {
+              cell.classList.add("obstacle");
+            }
+          }
+          cell.innerText = "0.00";
+          row.appendChild(cell);
+        }
+        table.appendChild(row);
+      }
+      document.getElementById("valueContainer").innerHTML = "";
+      document.getElementById("valueContainer").appendChild(table);
+    }
+    
+    // 呼叫後端模擬步驟，並根據回傳資料更新畫面
+    function simulateStep() {
+      $.ajax({
+        url: '/simulate_step',
+        type: 'GET',
+        success: function(response) {
+          updateGridDisplay(response);
+          if (!response.simulationFinished) {
+            setTimeout(simulateStep, 1000);
+          } else {
+            document.getElementById("instruction").innerText = "最佳策略已收斂，最終路徑確定！";
+          }
+        },
+        error: function() {
+          console.log("模擬步驟呼叫失敗");
+        }
+      });
+    }
+    
+    // 更新主網格畫面：依據後端回傳的 valueGrid 與 trackingPath/finalPathArrows 更新顯示
+    function updateGridDisplay(data) {
+      // 取得 trackingPath 與最終路徑箭頭（若有）
+      let trackingPath = data.trackingPath;  // 陣列 [ [r, c], ... ]
+      let finalPathArrows = data.finalPathArrows; // 物件 { "r,c": arrow, ... }
+      // 更新每個格子的數值
+      document.querySelectorAll("#gridContainer td").forEach(cell => {
+        let r = parseInt(cell.dataset.row);
+        let c = parseInt(cell.dataset.col);
+        cell.innerText = data.valueGrid[r][c].toFixed(2);
+        // 保留原有的起點、終點、障礙物樣式
+        cell.classList.remove("tracking");
+        cell.classList.remove("final-path");
+      });
+      
+      // 依據是否模擬完成來標記：
+      if (data.simulationFinished) {
+        // 標記最終路徑：在 trackingPath 中的每個格子加入 final-path 樣式，並在非終點格子顯示箭頭
+        trackingPath.forEach(pos => {
+          let [r, c] = pos;
+          let cell = document.querySelector(`[data-row='${r}'][data-col='${c}']`);
+          if (cell) {
+            cell.classList.add("final-path");
+            // 若有箭頭資料且非終點，加入箭頭顯示
+            if (finalPathArrows[`${r},${c}`]) {
+              let arrowDiv = document.createElement("div");
+              arrowDiv.classList.add("arrow");
+              arrowDiv.innerText = finalPathArrows[`${r},${c}`];
+              cell.appendChild(arrowDiv);
+            }
+          }
+        });
+      } else {
+        // 模擬中：將目前最後一步（trackingPos）標記為 tracking
+        if (trackingPath.length > 0) {
+          let last = trackingPath[trackingPath.length - 1];
+          let cell = document.querySelector(`[data-row='${last[0]}'][data-col='${last[1]}']`);
+          if (cell) {
+            cell.classList.add("tracking");
+          }
+        }
+      }
+      
+      // 同步更新右側價值網格
+      generateValueGrid();
+    }
+    
+    // 點擊「開始策略評估」後開始模擬
+    function startSimulation() {
+      document.getElementById("simulateBtn").disabled = true;
+      simulateStep();
+    }
+  </script>
+</body>
+</html>
