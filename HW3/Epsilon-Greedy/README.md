@@ -12,10 +12,9 @@ A_t =
 \end{cases}
 $$
 
-其中，$\hat{\mu}_i(t)$ 是臂 $i$ 在前 $t-1$ 步的樣本平均獎勵。
 
 ## 解釋
-
+- $\hat{\mu}_i(t)$ 是臂 $i$ 在前 $t-1$ 步的樣本平均獎勵。
 - 參數 $\varepsilon$：控制「探索 (Exploration)」與「利用 (Exploitation)」之間的權衡。
 - **利用 (Exploitation)**：以機率 $1 - \varepsilon$ 選擇當前 $\hat{\mu}_i(t)$ 最大的臂，充分利用已知資訊。
 - **探索 (Exploration)**：以機率 $\varepsilon$ 隨機選擇任何臂，探索其他臂的潛在價值。
