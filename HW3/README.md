@@ -4,7 +4,7 @@
 ---
 
 <details>
-<summary>🎯 **Epsilon-Greedy** │ <sub><a href="https://hackmd.io/@1wquA7--QryPpt4pYcCWsQ/S1GR7xY1xe" target="_blank">HackMD 筆記</a></sub></summary>
+<summary>🎯 Epsilon-Greedy │ <sub><a href="https://hackmd.io/@1wquA7--QryPpt4pYcCWsQ/S1GR7xY1xe" target="_blank">HackMD 筆記</a></sub></summary>
 
 ### ✅ 優點
 - 🔹 **概念簡單、實作容易**  
@@ -21,7 +21,7 @@
 ---
 
 <details>
-<summary>📈 **UCB (Upper Confidence Bound)** │ <sub><a href="https://hackmd.io/@1wquA7--QryPpt4pYcCWsQ/BkhzV19kel" target="_blank">HackMD 筆記</a></sub></summary>
+<summary>📈 UCB (Upper Confidence Bound) │ <sub><a href="https://hackmd.io/@1wquA7--QryPpt4pYcCWsQ/BkhzV19kel" target="_blank">HackMD 筆記</a></sub></summary>
 
 ### ✅ 優點
 - 🔹 同時衡量 **價值估計 + 不確定度**，自動調節探索  
@@ -38,7 +38,7 @@
 ---
 
 <details>
-<summary>🌡️ **Softmax /Boltzmann Exploration** │ <sub><a href="https://hackmd.io/@1wquA7--QryPpt4pYcCWsQ/HJon3k51xl" target="_blank">HackMD 筆記</a></sub></summary>
+<summary>🌡️ Softmax Exploration │ <sub><a href="https://hackmd.io/@1wquA7--QryPpt4pYcCWsQ/HJon3k51xl" target="_blank">HackMD 筆記</a></sub></summary>
 
 ### ✅ 優點
 - 🔹 溫度參數將價值平滑轉為機率，**探索-利用過程漸進**  
@@ -55,7 +55,7 @@
 ---
 
 <details>
-<summary>🎲 **Thompson Sampling** │ <sub><a href="https://hackmd.io/@1wquA7--QryPpt4pYcCWsQ/BkJRQl5kel" target="_blank">HackMD 筆記</a></sub></summary>
+<summary>🎲 Thompson Sampling │ <sub><a href="https://hackmd.io/@1wquA7--QryPpt4pYcCWsQ/BkJRQl5kel" target="_blank">HackMD 筆記</a></sub></summary>
 
 ### ✅ 優點
 - 🔹 基於 **貝葉斯後驗抽樣**，自然平衡探索與利用  
@@ -69,5 +69,5 @@
 
 </details>
 
----
+
 
