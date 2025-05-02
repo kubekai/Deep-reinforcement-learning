@@ -21,7 +21,7 @@
 ---
 
 <details>
-<summary>🔵 Enhanced DQN Variants for Player Mode │ <sub><a href="https://hackmd.io/@1wquA7--QryPpt4pYcCWsQ/SyJdxaelxg" target="_blank">HackMD 筆記</a></sub></summary>
+<summary>🔵 Enhanced DQN Variants for Player Mode │ <sub><a href="https://hackmd.io/@1wquA7--QryPpt4pYcCWsQ/SJP4BfJgee" target="_blank">HackMD 筆記</a></sub></summary>
 
 ### ✅ 優點
 - **Double DQN** 減少 overestimation bias  
@@ -39,7 +39,7 @@
 ---
 
 <details>
-<summary>🛠 Enhance DQN for Random Mode (WITH Training Tips) │ <sub><a href="https://hackmd.io/@1wquA7--QryPpt4pYcCWsQ/r1Uvc531el" target="_blank">HackMD 筆記</a></sub></summary>
+<summary>🛠 Enhance DQN for Random Mode (WITH Training Tips) │ <sub><a href="https://hackmd.io/@1wquA7--QryPpt4pYcCWsQ/SyJdxaelxg" target="_blank">HackMD 筆記</a></sub></summary>
 
 ### ✅ 優點
 - **泛化能力佳**：能適應隨機起點的場景  
