@@ -50,6 +50,7 @@
 - **收斂難度增加**：需更多訓練技巧與調參  
 
 ### 📝 Training Tips
+- **Train Model** : 使用 `PyTorch Lightning ` 架構進行訓練
 - **Gradient Clipping**：使用 `gradient_clip_val`（例如 1.0）防止梯度爆炸  
 - **Learning Rate Scheduling**：StepLR 或 CosineAnnealing 衰減學習率  
 - **Target Network Update**：適度加快 `target_net` 同步頻率  
