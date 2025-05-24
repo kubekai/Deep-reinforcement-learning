@@ -4,7 +4,7 @@
 
 # 執行程式碼 (run.py): GOOG 交易策略分析報告
 
-使用 data_preprocessing.py 進行資料的抓取
+先使用 data_preprocessing.py 進行資料的抓取
 以下以 GOOG（Google）為例，對實驗中繪製的五張主要圖片進行逐一說明與分析。
 
 ---
@@ -96,7 +96,7 @@
 
 # 執行程式碼 (run.py): TSLA 交易策略分析報告
 
-使用 data_preprocessing.py 進行資料的抓取
+先使用 data_preprocessing.py 進行資料的抓取
 以下以 TSLA 為例，對實驗中繪製的五張主要圖片進行逐一說明與分析。
 
 ---
